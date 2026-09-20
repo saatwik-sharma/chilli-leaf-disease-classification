@@ -1,0 +1,131 @@
+{
+  "model": "ResNet-50 (ImageNet pretrained)",
+  "split_file": "dataset_splits_final.json",
+  "split_counts": {
+    "train": 6172,
+    "val": 1323,
+    "test": 1322,
+    "total": 8817
+  },
+  "best_epoch": 4,
+  "best_val_loss": 0.053902611324918415,
+  "best_val_acc": 98.0347694633409,
+  "test_loss": 0.06534310609913106,
+  "test_accuracy": 97.80635400907715,
+  "macro_metrics": {
+    "precision": 0.9798299427083252,
+    "recall": 0.9780695103865082,
+    "f1_score": 0.9788300953554877
+  },
+  "weighted_metrics": {
+    "precision": 0.9782543547953787,
+    "recall": 0.9780635400907716,
+    "f1_score": 0.9780490306977346
+  },
+  "per_class": {
+    "Bacterial_Spot": {
+      "precision": 0.9721115537848606,
+      "recall": 0.9959183673469387,
+      "f1-score": 0.9838709677419355,
+      "support": 245.0
+    },
+    "Cercospora_Leaf_Spot": {
+      "precision": 0.9964539007092199,
+      "recall": 0.9859649122807017,
+      "f1-score": 0.9911816578483245,
+      "support": 285.0
+    },
+    "Curl_Virus": {
+      "precision": 0.9539748953974896,
+      "recall": 0.9620253164556962,
+      "f1-score": 0.957983193277311,
+      "support": 237.0
+    },
+    "Healthy_Leaf": {
+      "precision": 0.968,
+      "recall": 0.979757085020243,
+      "f1-score": 0.9738430583501007,
+      "support": 247.0
+    },
+    "Nutrition_Deficiency": {
+      "precision": 0.9884393063583815,
+      "recall": 0.9447513812154696,
+      "f1-score": 0.9661016949152542,
+      "support": 181.0
+    },
+    "Powdery_Mildew": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 127.0
+    }
+  },
+  "confusion_matrix": [
+    [
+      244,
+      0,
+      0,
+      1,
+      0,
+      0
+    ],
+    [
+      0,
+      281,
+      0,
+      4,
+      0,
+      0
+    ],
+    [
+      6,
+      0,
+      228,
+      3,
+      0,
+      0
+    ],
+    [
+      1,
+      1,
+      1,
+      242,
+      2,
+      0
+    ],
+    [
+      0,
+      0,
+      10,
+      0,
+      171,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      127
+    ]
+  ],
+  "classes": [
+    "Bacterial_Spot",
+    "Cercospora_Leaf_Spot",
+    "Curl_Virus",
+    "Healthy_Leaf",
+    "Nutrition_Deficiency",
+    "Powdery_Mildew"
+  ],
+  "hyperparameters": {
+    "batch_size": 16,
+    "max_epochs": 20,
+    "patience": 5,
+    "learning_rate": 0.0001,
+    "weight_decay": 0.0001,
+    "optimizer": "AdamW",
+    "scheduler": "CosineAnnealingLR",
+    "amp": false
+  }
+}

@@ -1,0 +1,113 @@
+{
+  "model": "Hybrid (ResNet-50 + ViT-B/16)",
+  "best_epoch": 2,
+  "best_val_acc": 97.65684051398337,
+  "test_loss": 0.06580316160896332,
+  "test_accuracy": 97.88359788359789,
+  "macro_metrics": {
+    "precision": 0.980591658814908,
+    "recall": 0.980470582220407,
+    "f1_score": 0.9804999938182976
+  },
+  "weighted_metrics": {
+    "precision": 0.9789574691918501,
+    "recall": 0.9788359788359788,
+    "f1_score": 0.9788622407949265
+  },
+  "per_class": {
+    "Bacterial_Spot": {
+      "precision": 0.9875518672199171,
+      "recall": 0.9714285714285714,
+      "f1-score": 0.9794238683127572,
+      "support": 245.0
+    },
+    "Cercospora_Leaf_Spot": {
+      "precision": 0.9858657243816255,
+      "recall": 0.9789473684210527,
+      "f1-score": 0.9823943661971831,
+      "support": 285.0
+    },
+    "Curl_Virus": {
+      "precision": 0.9626556016597511,
+      "recall": 0.9747899159663865,
+      "f1-score": 0.9686847599164927,
+      "support": 238.0
+    },
+    "Healthy_Leaf": {
+      "precision": 0.9641434262948207,
+      "recall": 0.979757085020243,
+      "f1-score": 0.9718875502008032,
+      "support": 247.0
+    },
+    "Nutrition_Deficiency": {
+      "precision": 0.9833333333333333,
+      "recall": 0.9779005524861878,
+      "f1-score": 0.9806094182825484,
+      "support": 181.0
+    },
+    "Powdery_Mildew": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 127.0
+    }
+  },
+  "confusion_matrix": [
+    [
+      238,
+      3,
+      4,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      279,
+      3,
+      2,
+      1,
+      0
+    ],
+    [
+      1,
+      0,
+      232,
+      4,
+      1,
+      0
+    ],
+    [
+      2,
+      0,
+      2,
+      242,
+      1,
+      0
+    ],
+    [
+      0,
+      1,
+      0,
+      3,
+      177,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      127
+    ]
+  ],
+  "classes": [
+    "Bacterial_Spot",
+    "Cercospora_Leaf_Spot",
+    "Curl_Virus",
+    "Healthy_Leaf",
+    "Nutrition_Deficiency",
+    "Powdery_Mildew"
+  ]
+}
