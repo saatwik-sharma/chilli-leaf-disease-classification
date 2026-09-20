@@ -1,838 +1,627 @@
-﻿# Chilli Leaf Disease Classification Using CNN-ViT Models
+# Chilli Leaf Disease Classification Using CNN-ViT Models
 
-
-
-A deep learning study for six-class chilli leaf disease classification using ImageNet-pretrained CNN and Vision Transformer architectures, with duplicate-aware dataset auditing, controlled model comparison, and Grad-CAM-based visual interpretation.
-
-
+A research implementation for six-class chilli leaf disease classification using ImageNet-pretrained CNN and Vision Transformer architectures, with duplicate-aware dataset auditing, controlled model comparison, and Grad-CAM-based visual interpretation.
 
 ---
-
-
 
 ## 1. Project Overview
 
-
-
 Accurate identification of chilli leaf diseases from leaf images can support early disease recognition and reduce dependence on manual visual inspection.
 
+This project investigates deep learning approaches for classifying chilli leaf images into six disease categories. The study follows a controlled experimental pipeline:
 
-
-This project investigates deep learning approaches for classifying chilli leaf images into six categories. The study follows a controlled experimental pipeline:
-
-
-
-**Dataset Analysis â†’ Duplicate/Leakage Audit â†’ Duplicate-Aware Split â†’ Model Training â†’ Evaluation â†’ XAI**
-
-
+**Dataset Analysis → Duplicate/Leakage Audit → Duplicate-Aware Split → Model Training → Evaluation → XAI**
 
 Three main model configurations were evaluated:
 
+1. ResNet-50 baseline
+2. Frozen CNN + ViT hybrid
+3. Fully fine-tuned CNN + ViT hybrid
 
-
-1\. **ResNet-50** â€” CNN baseline
-
-2\. **Frozen ResNet-50 + ViT-B/16** â€” feature-level CNN-ViT fusion with frozen backbones
-
-3\. **Fine-tuned ResNet-50 + ViT-B/16** â€” end-to-end fine-tuned CNN-ViT hybrid
-
-
-
-The final experiments were performed using a duplicate-aware 70/15/15 train-validation-test split.
-
-
+The final objective was to determine how CNN features, Vision Transformer features, and end-to-end fine-tuning affect classification performance under a duplicate-aware evaluation protocol.
 
 ---
-
-
 
 ## 2. Dataset
 
-
-
-The dataset contains **8,817 images** belonging to six chilli leaf categories.
-
-
+The dataset contains **8,817 chilli leaf images** belonging to six classes.
 
 | Class                |    Images |
-
 | -------------------- | --------: |
-
 | Bacterial Spot       |     1,629 |
-
 | Cercospora Leaf Spot |     1,898 |
-
 | Curl Virus           |     1,590 |
-
 | Healthy Leaf         |     1,647 |
-
 | Nutrition Deficiency |     1,207 |
-
 | Powdery Mildew       |       846 |
-
 | **Total**            | **8,817** |
 
+### Dataset location
 
+The original dataset is intentionally **not included in this repository** because of repository size and reproducibility considerations.
 
-The dataset itself is **not included in this repository** because of its size and distribution considerations.
-
-
-
-Place the dataset directory locally before running the pipeline.
-
-
-
-Expected dataset location:
-
-
-
-```text
-
-Chilli Leaf Disease Image Dataset for Classificati/
-
-```
-
-
+The dataset folder and ZIP file are excluded using `.gitignore`.
 
 ---
 
+## 3. Dataset Quality and Duplicate Audit
 
+Before model training, the complete dataset was audited for visually similar and potentially duplicated images.
 
-## 3. Dataset Quality Audit
+A **difference hash (dHash)** based similarity analysis was performed across all 8,817 images.
 
+### Duplicate analysis
 
+* Total images analyzed: **8,817**
+* dHash groups identified: **6,397**
+* Multi-image groups: **1,195**
+* Largest similarity group: **146 images**
 
-Before final model training, the dataset was examined for visually similar and near-duplicate images.
+The duplicate analysis was used to reduce the possibility of visually similar images appearing across training, validation, and test sets.
 
-
-
-Perceptual hashing using **dHash** was used to identify groups of highly similar images.
-
-
-
-The analysis identified:
-
-
-
-* **8,817** total images
-
-* **6,397** perceptual-hash groups
-
-* **1,195** groups containing multiple images
-
-* Largest detected group: **146 images**
-
-
-
-These findings motivated a duplicate-aware splitting strategy to reduce the possibility of highly similar images being distributed across training and evaluation subsets.
-
-
-
-The duplicate analysis does not imply that every detected similar image represents data leakage; the purpose was to identify potentially related samples before constructing the final evaluation split.
-
-
+This is important because random image-level splitting can produce overly optimistic results when near-duplicate images are distributed across different subsets.
 
 ---
-
-
 
 ## 4. Final Dataset Split
 
-
-
-The final locked split contains:
-
-
+A duplicate-aware split was created and locked before the final experiments.
 
 | Split      |    Images | Percentage |
-
 | ---------- | --------: | ---------: |
-
-| Training   |     6,172 |        70% |
-
-| Validation |     1,323 |        15% |
-
-| Test       |     1,322 |        15% |
-
+| Training   |     6,172 |       ~70% |
+| Validation |     1,323 |       ~15% |
+| Test       |     1,322 |       ~15% |
 | **Total**  | **8,817** |   **100%** |
 
-
+The **test set was kept untouched during training and model selection**.
 
 The final split is stored in:
 
-
-
 ```text
-
 03_dataset_splitting/dataset_splits_final.json
-
 ```
-
-
-
-The test set was kept separate and was not used for model training or model-selection decisions.
-
-
-
-Earlier intermediate split files are preserved under:
-
-
-
-```text
-
-03_dataset_splitting/history/
-
-```
-
-
-
-This maintains the chronology of the dataset preparation process.
-
-
 
 ---
 
+## 5. Preprocessing
 
-
-## 5. Image Preprocessing
-
-
-
-All models use the same basic preprocessing pipeline.
-
-
+All models use ImageNet-compatible preprocessing.
 
 ### Training
 
+The training pipeline applies:
 
-
-* RandomResizedCrop: 224 Ã— 224
-
+* Random resized crop to 224 × 224
 * Random horizontal flip
-
-* Random rotation: Â±15Â°
-
-* Color jitter
-
+* Random rotation up to ±15°
+* Mild ColorJitter
 * ImageNet normalization
 
+### Validation and Test
 
+Validation and test images use:
 
-### Validation and Testing
-
-
-
-* Resize: 224 Ã— 224
-
+* Resize to 224 × 224
 * ImageNet normalization
 
-
-
-The same validation and test preprocessing was maintained across experiments for controlled comparison.
-
-
+The same locked split and evaluation protocol are used for the final model comparison.
 
 ---
 
+## 6. Experimental Pipeline
 
+The complete research pipeline is:
 
-## 6. Model Architectures
+```text
+Raw Dataset
+     ↓
+Dataset Inspection
+     ↓
+Class Distribution Analysis
+     ↓
+dHash Duplicate / Similarity Audit
+     ↓
+Duplicate-Aware Dataset Split
+     ↓
+Training / Validation / Test
+     ↓
+ResNet-50 Baseline
+     ↓
+Frozen CNN + ViT Hybrid
+     ↓
+Fully Fine-Tuned CNN + ViT Hybrid
+     ↓
+Final Test Evaluation
+     ↓
+Confusion Matrix + Classification Metrics
+     ↓
+Grad-CAM Visual Interpretation
+```
 
+---
 
+# 7. Model Architectures
 
-### 6.1 ResNet-50 Baseline
-
-
+## 7.1 ResNet-50 Baseline
 
 A standard ImageNet-pretrained **ResNet-50** was used as the CNN baseline.
 
+The final classification layer was replaced with a six-class classifier corresponding to the chilli disease categories.
 
-
-The original classification head was replaced with a six-class output layer.
-
-
-
-This establishes a strong convolutional baseline before introducing CNNâ€“Transformer fusion.
-
-
+The purpose of this experiment was to establish a strong CNN baseline before introducing multimodal feature fusion.
 
 ---
 
-
-
-### 6.2 Frozen CNN-ViT Hybrid
-
-
+## 7.2 Frozen CNN + ViT Hybrid
 
 The second experiment combines:
 
+* ImageNet-pretrained ResNet-50
+* ImageNet-pretrained ViT-B/16
 
+The feature representations from both branches are concatenated and passed to a trainable classification layer.
 
-* ResNet-50
+In this experiment, both backbone networks remain frozen and only the classifier is trained.
 
-* ViT-B/16
+### Parameter configuration
 
+```text
+CNN parameters:          23,508,032
+ViT parameters:          85,798,656
+Classifier parameters:       16,902
+Total parameters:       109,323,590
+Trainable parameters:       16,902
+```
 
-
-Both backbones use ImageNet-pretrained weights and remain frozen during training.
-
-
-
-Feature representations from both branches are concatenated and passed to a trainable classification layer.
-
-
-
-The experiment evaluates whether simple feature-level fusion provides an advantage without fine-tuning the pretrained backbones.
-
-
+This experiment tests whether simply combining pretrained CNN and transformer representations provides an advantage without fine-tuning the feature extractors.
 
 ---
 
+## 7.3 Fully Fine-Tuned CNN + ViT Hybrid
 
+The final hybrid model uses the same ResNet-50 + ViT-B/16 architecture, but both backbone networks are fully trainable.
 
-### 6.3 Fine-Tuned CNN-ViT Hybrid
-
-
-
-The final hybrid experiment uses the same ResNet-50 + ViT-B/16 architecture, but both branches are fine-tuned.
-
-
-
-Training configuration:
-
-
+The architecture consists of:
 
 ```text
+Input Image
+     │
+     ├───────────────┐
+     ↓               ↓
+ ResNet-50         ViT-B/16
+     │               │
+ CNN Features    ViT Features
+     │               │
+     └───────┬───────┘
+             ↓
+       Feature Fusion
+             ↓
+        Classification
+             ↓
+        6 Classes
+```
 
-Batch size:          2
+### Training configuration
 
-Gradient accumulation: 8
-
-Effective batch size: 16
-
-Backbone learning rate: 1e-5
-
-Classifier learning rate: 1e-4
-
-Weight decay:        1e-2
-
-Dropout:             0.3
-
-Maximum epochs:      10
-
+```text
+Batch size:              2
+Gradient accumulation:   8
+Effective batch size:    16
+Maximum epochs:          10
 Early stopping patience: 3
-
-Optimizer:           AdamW
-
-Scheduler:           CosineAnnealingLR
-
-AMP:                 Disabled
-
+Backbone learning rate:  1e-5
+Classifier learning rate: 1e-4
+Weight decay:             1e-2
+Dropout:                  0.3
+Optimizer:                AdamW
+Scheduler:                CosineAnnealingLR
+Loss:                     CrossEntropyLoss
+AMP:                      Disabled
 ```
 
-
-
-Separate learning rates were used so that the pretrained backbones could be updated conservatively while allowing the newly initialized classifier to learn faster.
-
-
+The use of separate learning rates allows the pretrained backbones to be fine-tuned conservatively while allowing the newly initialized classifier to learn more rapidly.
 
 ---
 
+# 8. Experimental Chronology
 
+Initial experiments were performed before the final duplicate-aware dataset audit.
 
-## 7. Experimental Chronology
+The preliminary results were retained separately because the later experiments use the stricter duplicate-aware split.
 
+### Preliminary results
 
+| Model          | Test Accuracy |
+| -------------- | ------------: |
+| ResNet-50      |        98.26% |
+| ViT-B/16       |        98.64% |
+| Initial Hybrid |        97.88% |
 
-The project initially included preliminary experiments on an earlier dataset split.
+These results are treated as **preliminary** rather than as the final controlled comparison.
 
+After identifying visually similar images and creating the final duplicate-aware split, the main experiments were repeated.
 
+---
 
-The workflow was subsequently refined after the duplicate-aware dataset audit.
+# 9. Final Results
 
+The final controlled comparison is based on the locked duplicate-aware test set containing **1,322 images**.
 
+| Model                | Test Accuracy |   Macro F1 |
+| -------------------- | ------------: | ---------: |
+| ResNet-50            |    **97.81%** | **97.88%** |
+| Frozen CNN + ViT     |    **93.95%** | **94.29%** |
+| Fine-Tuned CNN + ViT |    **98.26%** | **98.36%** |
 
-Therefore, the repository preserves both stages:
+The fully fine-tuned CNN + ViT hybrid achieved the highest test accuracy among the three final experiments.
 
+Compared with the ResNet-50 baseline, the fine-tuned hybrid improved test accuracy by:
 
+**0.45 percentage points**
+
+Compared with the frozen CNN + ViT hybrid, fine-tuning improved test accuracy by:
+
+**4.31 percentage points**
+
+The results indicate that simply concatenating frozen representations was not sufficient for this dataset, while end-to-end adaptation of both branches produced stronger performance.
+
+---
+
+# 10. ResNet-50 Final Results
+
+### Test performance
 
 ```text
+Test Accuracy:       97.81%
+Test Loss:            0.0653
 
-Initial experiments
+Macro Precision:     97.98%
+Macro Recall:        97.81%
+Macro F1:            97.88%
 
-&#x20;       â†“
-
-Dataset duplicate/similarity audit
-
-&#x20;       â†“
-
-Duplicate-aware final split
-
-&#x20;       â†“
-
-Final model retraining
-
-&#x20;       â†“
-
-Final evaluation
-
-&#x20;       â†“
-
-Grad-CAM analysis
-
+Weighted Precision:  97.83%
+Weighted Recall:     97.81%
+Weighted F1:         97.80%
 ```
 
-
-
-The preliminary results are retained for transparency and reproducibility but are not treated as the final evaluation results.
-
-
-
----
-
-
-
-## 8. Final Results
-
-
-
-The final models were evaluated on the locked **1,322-image test set**.
-
-
-
-| Model              | Test Accuracy |   Macro F1 |
-
-| ------------------ | ------------: | ---------: |
-
-| ResNet-50          |    **97.81%** | **97.88%** |
-
-| Frozen CNN-ViT     |    **93.95%** | **94.29%** |
-
-| Fine-Tuned CNN-ViT |    **98.26%** | **98.36%** |
-
-
-
-### Fine-Tuned CNN-ViT
-
-
-
-Final test performance:
-
-
-
-```text
-
-Test Accuracy:       98.26%
-
-Test Loss:            0.0728
-
-Macro Precision:     98.41%
-
-Macro Recall:        98.33%
-
-Macro F1:            98.36%
-
-Weighted Precision:  98.27%
-
-Weighted Recall:     98.26%
-
-Weighted F1:         98.26%
-
-```
-
-
-
-The fine-tuned hybrid achieved **98.26% accuracy**, corresponding to **1,293 correct predictions out of 1,322 test images**.
-
-
-
-Compared with the ResNet-50 baseline, this represents an absolute improvement of **0.45 percentage points** on the final test split.
-
-
-
-The frozen CNN-ViT configuration performed lower than both the ResNet-50 baseline and the fine-tuned hybrid, indicating that feature fusion without adapting the pretrained backbones was not sufficient to improve performance in this experimental setting.
-
-
-
-These results describe this dataset and experimental configuration and should not be interpreted as evidence of universal superiority of one architecture over another.
-
-
-
----
-
-
-
-## 9. Fine-Tuned Hybrid Per-Class Results
-
-
+### Per-class performance
 
 | Class                | Precision |  Recall |      F1 |
-
 | -------------------- | --------: | ------: | ------: |
-
-| Bacterial Spot       |    96.39% |  97.96% |  97.17% |
-
-| Cercospora Leaf Spot |    98.27% |  99.65% |  98.95% |
-
-| Curl Virus           |    98.27% |  95.78% |  97.01% |
-
-| Healthy Leaf         |    99.19% |  98.79% |  98.99% |
-
-| Nutrition Deficiency |    98.33% |  97.79% |  98.06% |
-
+| Bacterial Spot       |    97.21% |  99.59% |  98.39% |
+| Cercospora Leaf Spot |    99.65% |  98.60% |  99.12% |
+| Curl Virus           |    95.40% |  96.20% |  95.80% |
+| Healthy Leaf         |    96.80% |  97.98% |  97.38% |
+| Nutrition Deficiency |    98.84% |  94.48% |  96.61% |
 | Powdery Mildew       |   100.00% | 100.00% | 100.00% |
 
+---
 
+# 11. Frozen CNN + ViT Results
 
-The model produced 29 misclassifications out of 1,322 test samples.
+### Test performance
 
+```text
+Test Accuracy:       93.95%
+Test Loss:             0.2533
 
+Macro Precision:      94.58%
+Macro Recall:         94.18%
+Macro F1:             94.29%
+
+Weighted Precision:   94.27%
+Weighted Recall:      93.95%
+Weighted F1:          94.01%
+```
+
+This experiment demonstrates that feature fusion alone does not necessarily improve performance when both pretrained feature extractors remain frozen.
 
 ---
 
+# 12. Fine-Tuned CNN + ViT Results
 
-
-## 10. Explainable AI
-
-
-
-Grad-CAM was applied to the final convolutional layer of the **ResNet-50 branch** of the fine-tuned CNN-ViT hybrid.
-
-
-
-Target layer:
-
-
+### Test performance
 
 ```text
+Test Accuracy:       98.26%
+Test Loss:             0.0728
 
+Macro Precision:      98.41%
+Macro Recall:         98.33%
+Macro F1:             98.36%
+
+Weighted Precision:   98.27%
+Weighted Recall:      98.26%
+Weighted F1:          98.26%
+```
+
+### Per-class performance
+
+| Class                | Precision |  Recall |      F1 |
+| -------------------- | --------: | ------: | ------: |
+| Bacterial Spot       |    96.39% |  97.96% |  97.17% |
+| Cercospora Leaf Spot |    98.27% |  99.65% |  98.95% |
+| Curl Virus           |    98.27% |  95.78% |  97.01% |
+| Healthy Leaf         |    99.19% |  98.79% |  98.99% |
+| Nutrition Deficiency |    98.33% |  97.79% |  98.06% |
+| Powdery Mildew       |   100.00% | 100.00% | 100.00% |
+
+The model correctly classified:
+
+```text
+1293 / 1322 test images
+```
+
+with **29 misclassified images**.
+
+---
+
+# 13. Confusion Analysis
+
+The final fine-tuned hybrid confusion matrix is:
+
+```text
+[[240, 0, 3, 0, 2, 0],
+ [  0,284, 0, 1, 0, 0],
+ [  6, 2,227, 1, 1, 0],
+ [  1, 1, 1,244, 0, 0],
+ [  2, 2, 0, 0,177, 0],
+ [  0, 0, 0, 0, 0,127]]
+```
+
+The main remaining errors occur between visually similar disease categories, particularly:
+
+* Curl Virus and Bacterial Spot
+* Nutrition Deficiency and Curl Virus
+* Healthy Leaf and several disease categories
+
+This indicates that some errors are associated with visually overlapping symptoms rather than broad class confusion.
+
+---
+
+# 14. Explainable AI
+
+Grad-CAM was applied to the **final convolutional layer of the ResNet-50 branch** of the fully fine-tuned CNN + ViT hybrid.
+
+The target layer was:
+
+```text
 model.cnn.layer4[-1]
-
 ```
 
-
-
-The XAI analysis provides visual explanations of regions contributing to the CNN branch's prediction.
-
-
-
-The repository contains multiple correctly classified examples across all six classes:
-
-
+Three correctly classified examples were selected from each of the six classes, producing:
 
 ```text
+18 Grad-CAM visualizations
+```
 
+The XAI outputs are stored in:
+
+```text
 07_xai/xai_gradcam/
-
 ```
 
+Grad-CAM is used here to provide a visual interpretation of the CNN branch's learned spatial attention.
 
-
-A selected representative visualization can be used for the research paper.
-
-
-
-Importantly, the Grad-CAM analysis is specifically applied to the CNN branch and should not be interpreted as a complete explanation of the entire hybrid model's decision.
-
-
+It should not be interpreted as a complete explanation of the entire hybrid model decision because the final classifier also receives features from the ViT branch.
 
 ---
 
-
-
-## 11. Repository Structure
-
-
+# 15. Repository Structure
 
 ```text
-
 chilli-leaf-disease-classification/
-
-â”‚
-
-â”œâ”€â”€ .gitignore
-
-â”‚
-
-â”œâ”€â”€ 01_dataset_analysis/
-
-â”‚   â””â”€â”€ inspect_dataset.py
-
-â”‚
-
-â”œâ”€â”€ 02_duplicate_leakage_analysis/
-
-â”‚   â”œâ”€â”€ check_leakage.py
-
-â”‚   â”œâ”€â”€ dhash_suspicious_groups.jpg
-
-â”‚   â”œâ”€â”€ inspect_dhash_duplicates.py
-
-â”‚   â””â”€â”€ test_matches.py
-
-â”‚
-
-â”œâ”€â”€ 03_dataset_splitting/
-
-â”‚   â”œâ”€â”€ create_clean_split.py
-
-â”‚   â”œâ”€â”€ create_final_split.py
-
-â”‚   â”œâ”€â”€ dataset.py
-
-â”‚   â”œâ”€â”€ dataset_splits_final.json
-
-â”‚   â”œâ”€â”€ verify_clean_split.py
-
-â”‚   â””â”€â”€ history/
-
-â”‚       â”œâ”€â”€ dataset_splits.json
-
-â”‚       â””â”€â”€ dataset_splits_clean.json
-
-â”‚
-
-â”œâ”€â”€ 04_models/
-
-â”‚   â”œâ”€â”€ model.py
-
-â”‚   â”œâ”€â”€ model_hybrid.py
-
-â”‚   â”œâ”€â”€ model_hybrid_finetuned.py
-
-â”‚   â””â”€â”€ model_vit.py
-
-â”‚
-
-â”œâ”€â”€ 05_training/
-
-â”‚   â”œâ”€â”€ train.py
-
-â”‚   â”œâ”€â”€ train_hybrid.py
-
-â”‚   â”œâ”€â”€ train_hybrid_finetuned.py
-
-â”‚   â””â”€â”€ train_vit.py
-
-â”‚
-
-â”œâ”€â”€ 06_results/
-
-â”‚   â”œâ”€â”€ preliminary/
-
-â”‚   â”œâ”€â”€ resnet50_baseline/
-
-â”‚   â”œâ”€â”€ hybrid_cnn_vit/
-
-â”‚   â””â”€â”€ hybrid_cnn_vit_finetuned/
-
-â”‚
-
-â”œâ”€â”€ 07_xai/
-
-â”‚   â”œâ”€â”€ gradcam_xai.py
-
-â”‚   â””â”€â”€ xai_gradcam/
-
-â”‚
-
-â””â”€â”€ 08_figures/
-
-&#x20;   â”œâ”€â”€ preliminary/
-
-&#x20;   â””â”€â”€ final/
-
+│
+├── README.md
+│
+├── 01_dataset_analysis/
+│   └── inspect_dataset.py
+│
+├── 02_duplicate_leakage_analysis/
+│   ├── check_leakage.py
+│   ├── dhash_suspicious_groups.jpg
+│   ├── inspect_dhash_duplicates.py
+│   └── test_matches.py
+│
+├── 03_dataset_splitting/
+│   ├── create_clean_split.py
+│   ├── create_final_split.py
+│   ├── dataset.py
+│   ├── dataset_splits_final.json
+│   ├── verify_clean_split.py
+│   └── history/
+│       ├── dataset_splits.json
+│       └── dataset_splits_clean.json
+│
+├── 04_models/
+│   ├── model.py
+│   ├── model_hybrid.py
+│   ├── model_hybrid_finetuned.py
+│   └── model_vit.py
+│
+├── 05_training/
+│   ├── train.py
+│   ├── train_hybrid.py
+│   ├── train_hybrid_finetuned.py
+│   └── train_vit.py
+│
+├── 06_results/
+│   ├── preliminary/
+│   ├── resnet50_baseline/
+│   ├── hybrid_cnn_vit/
+│   └── hybrid_cnn_vit_finetuned/
+│
+├── 07_xai/
+│   ├── gradcam_xai.py
+│   └── xai_gradcam/
+│
+└── 08_figures/
+    ├── final/
+    └── preliminary/
 ```
-
-
 
 ---
 
+# 16. Results Directory
 
+The repository preserves both preliminary and final experimental results.
 
-## 12. Reproducibility
-
-
-
-### Environment
-
-
-
-The experiments were developed using:
-
-
-
-* Python
-
-* PyTorch
-
-* torchvision
-
-* scikit-learn
-
-* NumPy
-
-* Pandas
-
-* Matplotlib
-
-* OpenCV/PIL-based image processing
-
-* Grad-CAM
-
-
-
-GPU training was performed using an NVIDIA RTX 3050 Laptop GPU with CUDA support.
-
-
-
-### Dataset Setup
-
-
-
-Place the dataset in the project root:
-
-
+### Preliminary
 
 ```text
-
-Chilli Leaf Disease Image Dataset for Classificati/
-
+06_results/preliminary/
+├── test_results.json
+├── test_results_hybrid.json
+└── test_results_vit.json
 ```
 
-
-
-### Pipeline
-
-
-
-The project follows the numbered directory order:
-
-
+### ResNet-50
 
 ```text
-
-01_dataset_analysis
-
-&#x20;       â†“
-
-02_duplicate_leakage_analysis
-
-&#x20;       â†“
-
-03_dataset_splitting
-
-&#x20;       â†“
-
-04_models
-
-&#x20;       â†“
-
-05_training
-
-&#x20;       â†“
-
-06_results
-
-&#x20;       â†“
-
-07_xai
-
-&#x20;       â†“
-
-08_figures
-
+06_results/resnet50_baseline/
+├── classification_report.txt
+├── config.json
+├── confusion_matrix.png
+├── test_results.json
+├── training_curves.png
+├── training_history.csv
+└── training_history.json
 ```
 
+### Frozen Hybrid
 
+```text
+06_results/hybrid_cnn_vit/
+├── classification_report.txt
+├── config.json
+├── confusion_matrix.png
+├── test_results.json
+├── training_curves.png
+└── training_history.json
+```
 
-The final split file should be generated/verified before final model evaluation.
+### Fine-Tuned Hybrid
 
-
+```text
+06_results/hybrid_cnn_vit_finetuned/
+├── classification_report.txt
+├── config.json
+├── confusion_matrix.png
+├── test_results.json
+└── training_history.json
+```
 
 ---
 
+# 17. Reproducibility
 
+The repository contains:
 
-## 13. Results and Checkpoints
-
-
-
-Model checkpoints are intentionally excluded from GitHub because of their large file sizes.
-
-
-
-The repository therefore contains:
-
-
-
-* model definitions
-
-* training scripts
-
-* evaluation results
-
-* dataset split information
-
-* figures
-
+* Dataset inspection code
+* Duplicate/similarity analysis
+* Final dataset split
+* Dataset loader
+* Model definitions
+* Training scripts
+* Evaluation results
+* Confusion matrices
+* Training histories
+* Grad-CAM implementation
 * XAI outputs
 
+The dataset itself and trained model checkpoints are excluded from GitHub because of their size.
 
+To reproduce the experiments:
 
-but does not contain the trained `.pth` checkpoint files or the original dataset.
-
-
-
----
-
-
-
-## 14. Research Contribution
-
-
-
-The main methodological aspects of this study are:
-
-
-
-1\. Evaluation of a CNN baseline for six-class chilli leaf disease classification.
-
-2\. Investigation of CNN-ViT feature fusion.
-
-3\. Comparison between frozen and fully fine-tuned hybrid architectures.
-
-4\. Duplicate/similarity-aware dataset auditing before final evaluation.
-
-5\. Controlled evaluation using a locked 70/15/15 split.
-
-6\. Grad-CAM-based visual interpretation of the CNN branch.
-
-
-
-The study emphasizes a reproducible experimental workflow in which dataset quality assessment precedes final model comparison.
-
-
+1. Obtain the original dataset.
+2. Place it in the expected dataset directory.
+3. Install the required Python dependencies.
+4. Run the dataset analysis and splitting scripts.
+5. Use the provided model and training scripts.
+6. Evaluate the trained models using the provided evaluation configuration.
 
 ---
 
+# 18. Important Reproducibility Notes
 
+The final evaluation uses the locked duplicate-aware split:
 
-## 15. Authors
+```text
+Train: 6,172
+Validation: 1,323
+Test: 1,322
+```
 
+The test set must not be used during training, hyperparameter selection, or early stopping.
 
+Model checkpoints are intentionally excluded from version control through `.gitignore`.
+
+The dataset is also excluded from version control.
+
+---
+
+# 19. Research Contribution
+
+The main contribution of this implementation is a controlled investigation of CNN and Vision Transformer representations for chilli leaf disease classification while explicitly addressing dataset similarity and potential split contamination.
+
+The study includes:
+
+* Six-class chilli disease classification
+* Dataset-level duplicate/similarity auditing
+* Duplicate-aware train/validation/test splitting
+* A strong CNN baseline
+* CNN + Vision Transformer feature fusion
+* Comparison of frozen and fully fine-tuned hybrid models
+* Class-wise evaluation
+* Confusion matrix analysis
+* Grad-CAM-based visual interpretation
+
+The results show that the final fine-tuned CNN + ViT configuration achieved **98.26% test accuracy** on the locked duplicate-aware test set.
+
+This result is specific to the dataset and experimental protocol used in this study and should not be interpreted as universal superiority over other architectures or datasets.
+
+---
+
+# 20. Limitations
+
+Several limitations should be considered:
+
+* The dataset is image-based and may not fully represent field conditions.
+* Images may differ from real-world photographs in lighting, background, camera quality, and disease severity.
+* The study uses a single chilli leaf dataset.
+* The external generalization of the trained model has not yet been established.
+* Grad-CAM explains the CNN branch rather than the complete CNN + ViT decision process.
+* The final improvement over the ResNet-50 baseline is relatively small at 0.45 percentage points.
+
+Future work can evaluate the model on independently collected field images and additional chilli disease datasets.
+
+---
+
+# 21. Technologies Used
+
+* Python
+* PyTorch
+* torchvision
+* NumPy
+* Pandas
+* scikit-learn
+* Matplotlib
+* PIL
+* Grad-CAM
+* Git / GitHub
+* NVIDIA CUDA
+
+---
+
+# 22. Authors
 
 **Saatwik Sharma**
-
-B.Tech Artificial Intelligence \& Machine Learning
-
+B.Tech Artificial Intelligence & Machine Learning
 Symbiosis Institute of Technology, Pune
 
+---
 
+## License
 
-**Research work:** Chilli Leaf Disease Classification using CNN and Vision Transformer architectures.
-
-
-
-
-
+This repository is intended for academic and research purposes.
